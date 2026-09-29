@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Отметка группы</title>
+<style>
+:root{--green:#087f5b;--dark:#17332b;--muted:#65766f;--line:#e0e9e4;--bg:#f4f8f5;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--dark);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 20px 64px}.top{display:flex;align-items:center;gap:14px;margin-bottom:26px}.logo{width:48px;height:48px;border-radius:16px;background:#d9f3e7;display:grid;place-items:center;font-size:25px}.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green)}h1{font-size:clamp(28px,6vw,40px);line-height:1.12;margin:4px 0 8px}.intro{color:var(--muted);margin:0}.card{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px;margin-top:22px;box-shadow:0 8px 28px #17332b0a}.card h2{margin:0 0 5px;font-size:20px}.hint{margin:0 0 18px;color:var(--muted);font-size:14px}.form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}label{display:block;font-size:13px;font-weight:650;margin-bottom:6px}input,select,button{font:inherit;border-radius:11px;min-height:46px}input,select{width:100%;border:1px solid #cbd9d1;padding:10px 12px;background:white;color:var(--dark)}button{border:0;background:var(--green);color:white;font-weight:700;padding:0 19px;cursor:pointer}button:hover{background:#066c4e}.sessions{display:grid;gap:12px;margin-top:16px}.session{border:1px solid var(--line);border-radius:15px;padding:16px;display:flex;justify-content:space-between;gap:14px;align-items:center}.date{font-weight:750}.time{font-size:14px;color:var(--muted)}.badge{display:inline-block;margin-left:7px;border-radius:99px;background:#e7f6ee;color:var(--green);font-size:12px;padding:3px 8px}.names{margin-top:8px;color:#42564d;font-size:14px;word-break:break-word}.empty{color:var(--muted);font-size:14px}.tools{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:18px}.secondary{min-height:40px;background:#edf5f0;color:var(--green);padding:0 13px}.secondary:hover{background:#dcefe4}.notice{font-size:13px;color:var(--muted);margin-top:20px;padding:13px 15px;background:#eef4f0;border-radius:12px}.toast{color:var(--green);font-size:14px;min-height:22px;margin-top:8px}@media(max-width:600px){main{padding:28px 14px}.card{padding:18px}.form{grid-template-columns:1fr}.session{align-items:flex-start}.tools{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body><main>
+<header class="top"><div class="logo">✓</div><div><div class="eyebrow">Группа WhatsApp</div><div style="font-weight:700">Список участников</div></div></header>
+<h1>Кто будет?</h1><p class="intro">Отметьтесь на игру во вторник или четверг. Запись открывается с 11:00, игра начинается в 21:00.</p>
+<section class="card"><h2>Записаться</h2><p class="hint">Запись на ближайшие игры доступна со вторника и четверга с 11:00.</p>
+<form id="signup" class="form"><div><label for="person">Ваше имя</label><input id="person" maxlength="40" placeholder="Например, Алексей" required></div><div><label for="date">День встречи</label><select id="date" required></select></div><button type="submit" id="signupBtn">Отметиться</button></form><div id="message" class="toast" aria-live="polite"></div></section>
+<section class="card"><h2>Ближайшие встречи</h2><p class="hint">Вторник и четверг · игра в 21:00</p><div id="sessions" class="sessions"></div><div class="tools"><button class="secondary" id="copy">Скопировать список для WhatsApp</button><button class="secondary" id="clear">Очистить записи на этом устройстве</button></div></section>
+<div class="notice">Отметиться можно с 11:00 в день игры. Эта демо-страница сохраняет отметки только в этом браузере. Открытие записи и лимит действуют в этой демо-странице. Сейчас данные сохраняются только в браузере; чтобы группа видела общий список и ограничения соблюдались для всех, сайт нужно опубликовать с общей базой данных.</div>
+</main>
+<script>
+const KEY='group-checkins-v1', LIMIT=21;
+const wd=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+const dates=[];const today=new Date();today.setHours(0,0,0,0);
+for(let i=0;i<35&&dates.length<8;i++){const d=new Date(today);d.setDate(today.getDate()+i);if(d.getDay()===2||d.getDay()===4)dates.push(d)}
+const dateKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const label=d=>`${wd[d.getDay()]}, ${d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}`;
+const select=document.querySelector('#date'),nameInput=document.querySelector('#person'),signupBtn=document.querySelector('#signupBtn');
+dates.forEach((d,i)=>{const o=document.createElement('option');o.value=dateKey(d);o.textContent=label(d)+(i===0?' — ближайшая':'');select.append(o)});
+const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
+const save=x=>localStorage.setItem(KEY,JSON.stringify(x));
+function canRegister(k){const d=dates.find(x=>dateKey(x)===k);if(!d)return false;const now=new Date();return now.getFullYear()===d.getFullYear()&&now.getMonth()===d.getMonth()&&now.getDate()===d.getDate()&&now.getHours()>=11}
+function refresh(){const k=select.value,data=read(),count=(data[k]||[]).length,open=canRegister(k);signupBtn.disabled=!open||count>=LIMIT;signupBtn.style.opacity=signupBtn.disabled?'.55':'1';document.querySelector('#message').textContent=!open?'Запись откроется в день игры ровно в 11:00.':count>=LIMIT?'Все 21 место заняты. Запись закрыта.':`Запись открыта · свободно мест: ${LIMIT-count}`}
+function draw(){const data=read(),root=document.querySelector('#sessions');root.replaceChildren();dates.forEach(d=>{const k=dateKey(d),people=(data[k]||[]).slice(0,LIMIT),row=document.createElement('article');row.className='session';const info=document.createElement('div');const title=document.createElement('div');title.className='date';title.textContent=label(d);const badge=document.createElement('span');badge.className='badge';badge.textContent='игра в 21:00';title.append(badge);info.append(title);const names=document.createElement('div');names.className=people.length?'names':'empty';names.textContent=people.length?`Участники (${people.length}/${LIMIT}): ${people.join(' · ')}`:'Пока никто не записался';info.append(names);row.append(info);root.append(row)});refresh()}
+document.querySelector('#signup').addEventListener('submit',e=>{e.preventDefault();const name=nameInput.value.trim(),k=select.value,data=read();data[k]??=[];if(!canRegister(k)){refresh();return}if(data[k].some(x=>x.toLocaleLowerCase()===name.toLocaleLowerCase())){document.querySelector('#message').textContent='Вы уже записаны на эту игру.';return}if(data[k].length>=LIMIT){refresh();return}data[k].push(name);save(data);nameInput.value='';draw()});
+select.addEventListener('change',refresh);
+document.querySelector('#copy').addEventListener('click',async()=>{const data=read(),lines=['Список на игру (начало в 21:00, максимум 21 человек):',''];dates.forEach(d=>{const people=(data[dateKey(d)]||[]).slice(0,LIMIT);lines.push(`${label(d)}: ${people.length?people.map((n,i)=>`${i+1}. ${n}`).join(', '):'пока никого'}`)});try{await navigator.clipboard.writeText(lines.join('\n'));document.querySelector('#message').textContent='Список скопирован. Можно вставить его в WhatsApp.'}catch{document.querySelector('#message').textContent=lines.join('\n')}});
+document.querySelector('#clear').addEventListener('click',()=>{if(confirm('Удалить все отметки, сохранённые в этом браузере?')){localStorage.removeItem(KEY);draw()}});
+draw();setInterval(refresh,15000);
+</script></body></html>
+
+
